@@ -122,13 +122,29 @@ NavigationPane {
             ListView {
                 dataModel: itemsDataModel
                 enabled: ! query.busy
+                function reload() {
+                    masterPage.reload()
+                }
                 listItemComponents: [
                     ListItemComponent {
                         type: "item"
                         StandardListItem {
+                            id: component
                             title: ListItemData.data.name
                             description: Qt.formatDateTime(ListItemData.data.date, "yyyy-MM-dd")
                             status: ListItemData.data.count
+                            contextActions: [
+                                ActionSet {
+                                    DeleteActionItem {
+                                        onTriggered: {
+                                            ListItemData.eraseCompleted.connect(function(succ, error) {
+                                                    component.ListItem.view.reload()
+                                                })
+                                            ListItemData.erase()
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     ListItemComponent {

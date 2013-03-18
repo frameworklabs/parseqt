@@ -115,6 +115,49 @@ void ParseObject::save()
 	}
 }
 
+void ParseObject::erase()
+{
+	Q_ASSERT(!_className.isEmpty());
+
+	if (_busy) {
+		return;
+	}
+	setBusy(true);
+
+	ParseError *error = ParseManager::instance()->request(QNetworkAccessManager::DeleteOperation,
+											"classes/" + _className + "/" + objectId(),
+											QVariant(),
+											this, SLOT(eraseFinished()));
+
+	if (error) {
+		setBusy(false);
+
+		error->setParent(this);
+		Q_EMIT eraseCompleted(false, error);
+	}
+}
+
+void ParseObject::eraseFinished()
+{
+	QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+	reply->deleteLater();
+
+	setBusy(false);
+
+	ParseError *error = NULL;
+	QVariant json = ParseManager::instance()->retrieveJsonReply(reply, 200, &error);
+
+	if (error) {
+		error->setParent(this);
+		Q_EMIT eraseCompleted(false, error);
+		return;
+	}
+
+	setData(QVariantMap());
+
+	Q_EMIT eraseCompleted(true, NULL);
+}
+
 ParseError *ParseObject::setData(const QVariantMap &jsonMap)
 {
 	bool changedData = false;

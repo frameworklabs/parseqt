@@ -144,6 +144,10 @@ ParseError *ParseManager::request(QNetworkAccessManager::Operation op, const QSt
 		break;
 
 	case QNetworkAccessManager::DeleteOperation:
+		if (_trace) {
+			qDebug() << "delete";
+		}
+		reply = _accessManager.deleteResource(request);
 		break;
 
 	case QNetworkAccessManager::CustomOperation:

@@ -45,6 +45,10 @@ public:
 	Q_INVOKABLE void save();
 	Q_SIGNAL void saveCompleted(bool succeeded, parseqt::ParseError *error);
 
+	/// deleting objects (delete and destroy are reserved names/functions in C++ and JS)
+	Q_INVOKABLE void erase();
+	Q_SIGNAL void eraseCompleted(bool succeeded, parseqt::ParseError *error);
+
 Q_SIGNALS:
 	void dataChanged();
 	void objectIdChanged();
@@ -68,6 +72,8 @@ private:
 
 	void updateObject();
 	Q_SLOT void updateObjectFinished();
+
+	Q_SLOT void eraseFinished();
 
 	void setBusy(bool busy);
 
