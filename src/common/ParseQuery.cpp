@@ -54,8 +54,8 @@ void ParseQuery::getObjectById(const QString &objectId)
 	if (error) {
 		setBusy(false);
 
-		error->setParent(this);
 		Q_EMIT getObjectByIdCompleted(NULL, error);
+		error->deleteLater();
 	}
 }
 
@@ -69,12 +69,12 @@ void ParseQuery::getObjectByIdFinished()
 	ParseError *error = NULL;
 	QVariant json = ParseManager::instance()->retrieveJsonReply(reply, 200, &error);
 	if (!json.isValid()) {
-		error->setParent(this);
 		Q_EMIT getObjectByIdCompleted(NULL, error);
+		error->deleteLater();
 		return;
 	}
 
-	ParseObject *result = new ParseObject(this);
+	ParseObject *result = new ParseObject();
 	result->setClassName(_className);
 	result->setData(json.toMap());
 
@@ -174,8 +174,8 @@ void ParseQuery::findObjects()
 	if (error) {
 		setBusy(false);
 
-		error->setParent(this);
 		Q_EMIT findObjectsCompleted(QVariant(), error);
+		error->deleteLater();
 	}
 }
 
@@ -189,15 +189,15 @@ void ParseQuery::findObjectsFinished()
 	ParseError *error = NULL;
 	QVariant json = ParseManager::instance()->retrieveJsonReply(reply, 200, &error);
 	if (!json.isValid()) {
-		error->setParent(this);
 		Q_EMIT findObjectsCompleted(QVariant(), error);
+		error->deleteLater();
 		return;
 	}
 
 	QVariantList results;
 	QVariantList jsonResults = json.toMap().value("results").toList();
 	foreach (const QVariant &jsonResult, jsonResults) {
-		ParseObject *result = new ParseObject(this);
+		ParseObject *result = new ParseObject();
 		result->setClassName(_className);
 		result->setData(jsonResult.toMap());
 

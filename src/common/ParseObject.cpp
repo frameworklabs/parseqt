@@ -132,8 +132,8 @@ void ParseObject::erase()
 	if (error) {
 		setBusy(false);
 
-		error->setParent(this);
 		Q_EMIT eraseCompleted(false, error);
+		error->deleteLater();
 	}
 }
 
@@ -148,8 +148,8 @@ void ParseObject::eraseFinished()
 	QVariant json = ParseManager::instance()->retrieveJsonReply(reply, 200, &error);
 
 	if (error) {
-		error->setParent(this);
 		Q_EMIT eraseCompleted(false, error);
+		error->deleteLater();
 		return;
 	}
 
@@ -246,8 +246,8 @@ void ParseObject::createObject()
 	if (error) {
 		setBusy(false);
 
-		error->setParent(this);
 		Q_EMIT saveCompleted(false, error);
+		error->deleteLater();
 	}
 }
 
@@ -267,8 +267,8 @@ void ParseObject::createObjectFinished()
 	}
 
 	if (!newJson.isValid()) {
-		error->setParent(this);
 		Q_EMIT saveCompleted(false, error);
+		error->deleteLater();
 		return;
 	}
 
@@ -292,8 +292,8 @@ void ParseObject::updateObject()
 	if (error) {
 		setBusy(false);
 
-		error->setParent(this);
 		Q_EMIT saveCompleted(false, error);
+		error->deleteLater();
 	}
 }
 
@@ -313,8 +313,8 @@ void ParseObject::updateObjectFinished()
 	}
 
 	if (!newJson.isValid()) {
-		error->setParent(this);
 		Q_EMIT saveCompleted(false, error);
+		error->deleteLater();
 		return;
 	}
 
