@@ -105,6 +105,12 @@ NavigationPane {
                     itemViewPage.item = item
                     addItemSheet.open()
                 }
+            },
+            ActionItem {
+                title: "Reload"
+                onTriggered: {
+                    masterPage.reload()
+                }
             }
         ]
 
