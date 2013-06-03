@@ -13,12 +13,15 @@
 
 namespace parseqt {
 
+/// Constants
+extern const QString ContentTypeNone;
+extern const QString ContentTypeJson;
+
+/// Forwards
 class ParseError;
-
-/// Internal class - use class Parse instead
-
 class ParseManagerDelegate;
 
+/// Internal class - use class Parse instead
 class ParseManager {
 public:
 	/// construction
@@ -39,9 +42,12 @@ public:
 	void setTrace(bool trace);
 
 	/// communication
-	ParseError *request(QNetworkAccessManager::Operation op, const QString &url, const QVariant& variant,
+	ParseError *request(QNetworkAccessManager::Operation op, const QString &url,
+						const QString &type, const QVariant& variant,
 						QObject *receiver, const char *slot);
 	QVariant retrieveJsonReply(QNetworkReply *reply, int expectedStatusCode, ParseError **error);
+	QByteArray retrieveByteArrayReply(QNetworkReply *reply, int expectedStatusCode, ParseError **error);
+	bool redirectReply(QNetworkReply *reply, QObject *receiver, const char *slot);
 
 	/// ifyers
 	QVariant jsonify(const QVariant &data, ParseError **error);
@@ -60,6 +66,7 @@ private:
 	QNetworkAccessManager _accessManager;
 };
 
+/// Internal delegate
 class ParseManagerDelegate {
 public:
 	virtual ~ParseManagerDelegate() { }

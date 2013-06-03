@@ -20,6 +20,9 @@
 
 namespace parseqt {
 
+const QString ContentTypeNone("");
+const QString ContentTypeJson("application/json");
+
 Q_GLOBAL_STATIC(ParseManager, theParseManager);
 
 ParseManager::ParseManager() : _delegate(NULL), _trace(false)
@@ -77,7 +80,9 @@ void ParseManager::setTrace(bool trace)
 	_trace = trace;
 }
 
-ParseError *ParseManager::request(QNetworkAccessManager::Operation op, const QString &url, const QVariant &variant, QObject *receiver, const char *slot)
+ParseError *ParseManager::request(QNetworkAccessManager::Operation op, const QString &url,
+								  const QString &type, const QVariant &variant,
+								  QObject *receiver, const char *slot)
 {
 	Q_ASSERT(!url.isEmpty());
 	Q_ASSERT(receiver);
@@ -104,14 +109,16 @@ ParseError *ParseManager::request(QNetworkAccessManager::Operation op, const QSt
 		break;
 
 	case QNetworkAccessManager::GetOperation:
-		if (!variant.isValid()) {
-			return new ParseError(ParseError::DomainParseQt, ParseError::ParseQtInternal, "internal");
-		}
-		buffer = variant.toByteArray();
-		if (!buffer.isEmpty()) {
-			QUrl url = request.url();
-			url.setEncodedQuery(buffer);
-			request.setUrl(url);
+		if (type == ContentTypeJson) {
+			if (!variant.isValid()) {
+				return new ParseError(ParseError::DomainParseQt, ParseError::ParseQtInternal, "internal");
+			}
+			buffer = variant.toByteArray();
+			if (!buffer.isEmpty()) {
+				QUrl url = request.url();
+				url.setEncodedQuery(buffer);
+				request.setUrl(url);
+			}
 		}
 		if (_trace) {
 			qDebug() << "get:" << buffer;
@@ -120,25 +127,47 @@ ParseError *ParseManager::request(QNetworkAccessManager::Operation op, const QSt
 		break;
 
 	case QNetworkAccessManager::PutOperation:
-		buffer = ParseJson::write(variant, &error);
-		if (buffer.isEmpty()) {
-			return error;
+		request.setHeader(QNetworkRequest::ContentTypeHeader, type);
+		if (type == ContentTypeJson) {
+			buffer = ParseJson::write(variant, &error);
+			if (buffer.isNull()) {
+				return error;
+			}
+			if (_trace) {
+				qDebug() << "put:" << buffer;
+			}
 		}
-		request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-		if (_trace) {
-			qDebug() << "put:" << buffer;
+		else {
+			buffer = variant.toByteArray();
+			if (buffer.isEmpty()) {
+				return new ParseError(ParseError::DomainParseQt, ParseError::ParseQtNoData, "No Data");
+			}
+			if (_trace) {
+				qDebug() << "put length:" << buffer.length();
+			}
 		}
 		reply = _accessManager.put(request, buffer);
 		break;
 
 	case QNetworkAccessManager::PostOperation:
-		buffer = ParseJson::write(variant, &error);
-		if (buffer.isEmpty()) {
-			return error;
+		request.setHeader(QNetworkRequest::ContentTypeHeader, type);
+		if (type == ContentTypeJson) {
+			buffer = ParseJson::write(variant, &error);
+			if (buffer.isNull()) {
+				return error;
+			}
+			if (_trace) {
+				qDebug() << "post:" << buffer;
+			}
 		}
-		request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-		if (_trace) {
-			qDebug() << "post:" << buffer;
+		else {
+			buffer = variant.toByteArray();
+			if (buffer.isEmpty()) {
+				return new ParseError(ParseError::DomainParseQt, ParseError::ParseQtNoData, "No Data");
+			}
+			if (_trace) {
+				qDebug() << "post length:" << buffer.length();
+			}
 		}
 		reply = _accessManager.post(request, buffer);
 		break;
@@ -196,6 +225,52 @@ QVariant ParseManager::retrieveJsonReply(QNetworkReply *reply, int expectedStatu
 	}
 
 	return json;
+}
+
+QByteArray ParseManager::retrieveByteArrayReply(QNetworkReply *reply, int expectedStatusCode, ParseError **error)
+{
+	Q_ASSERT(reply);
+	Q_ASSERT(error);
+
+	if (reply->error() != QNetworkReply::NoError) {
+		if (_trace) {
+			qDebug() << "reply: error" << reply;
+		}
+		*error = new ParseError(ParseError::DomainQNetwork, reply->error(), reply->errorString());
+		return QByteArray();
+	}
+
+	QByteArray buffer = reply->readAll();
+	if (_trace) {
+		qDebug() << "reply length:" << buffer.length();
+	}
+
+	if (expectedStatusCode != -1 && (expectedStatusCode != reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt())) {
+		*error = new ParseError(ParseError::DomainParseQt, ParseError::ParseQtWrongStatusCode, "does not match expected status code");
+		return QByteArray();
+	}
+
+	return buffer;
+}
+
+bool ParseManager::redirectReply(QNetworkReply *reply, QObject *receiver, const char *slot)
+{
+	if (reply->error() != QNetworkReply::NoError || reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() != 302) {
+		return false;
+	}
+
+	QNetworkRequest request = reply->request();
+
+	QUrl redirectUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+	request.setUrl(request.url().resolved(redirectUrl));
+
+	QNetworkReply *redirectReqply = _accessManager.get(request);
+
+	bool connected = QObject::connect(redirectReqply, SIGNAL(finished()), receiver, slot);
+	Q_ASSERT(connected);
+	Q_UNUSED(connected);
+
+	return true;
 }
 
 QDateTime ParseManager::dateTimeFromString(const QString &string)

@@ -7,6 +7,7 @@
 
 import bb.cascades 1.0
 import bb.system 1.0
+import pickers 1.0
 import com.frameworklabs.parseqt 1.0
 
 Page {
@@ -26,6 +27,25 @@ Page {
         },
         SystemToast {
             id: toast
+        },
+        ParseFile {
+            id: pf
+            onSaveCompleted: {
+                item.data.image = pf
+                updateImageView()
+            }
+            onGetDataCompleted: {
+            }
+        },
+        FilePicker {
+            id: filePicker
+            title: "Select File"
+            //type: FileType.Picture
+            onFileSelected: {
+                pf.name = "image.jpg"
+                pf.setDataFromFile(selectedFiles[0])
+                pf.save()
+            }
         }
     ]
     function handleSaveCompleted(success, error) {
@@ -43,6 +63,15 @@ Page {
         }
         toast.show()
     }
+    function updateImageView() {
+        if (! item.data.image) {
+            imageView.image = undefined
+            return
+        }
+        if (item.data.image.dataAvailable) {
+            _app.setImageFromByteArray(imageView, item.data.image.data)
+        }
+    }
     onSave: {
         // Fill ParseObject datamodel with values from UI
         item.data.name = nameField.text
@@ -54,6 +83,9 @@ Page {
 
         // Save the item
         item.save()
+    }
+    onItemChanged: {
+        updateImageView()
     }
 
     /// layout
@@ -120,8 +152,33 @@ Page {
             // Date
             DateTimePicker {
                 id: datePicker
+                bottomMargin: 10
                 title: "Date"
                 value: item.data.date ? item.data.date : new Date()
+            }
+
+            // Image
+            Container {
+                layout: StackLayout {
+                    orientation: LayoutOrientation.LeftToRight
+                }
+                Label {
+                    verticalAlignment: VerticalAlignment.Center
+                    text: "Image"
+                }
+                ImageView {
+                    id: imageView
+                    preferredHeight: 128
+                    preferredWidth: 128
+                    scalingMethod: ScalingMethod.AspectFill
+                }
+                Button {
+                    verticalAlignment: VerticalAlignment.Center
+                    text: "Change Image"
+                    onClicked: {
+                        filePicker.open()
+                    }
+                }
             }
         }
 

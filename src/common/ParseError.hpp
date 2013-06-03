@@ -45,7 +45,9 @@ public:
 	enum ParseQt {
 		ParseQtInternal = 1,
 		ParseQtNotInitialized = 2,
-		ParseQtInvalidType = 3
+		ParseQtInvalidType = 3,
+		ParseQtNoData = 4,
+		ParseQtWrongStatusCode = 5
 	};
 
 	explicit ParseError(QObject *parent = 0);
@@ -64,6 +66,10 @@ private:
 	int _code;
 	QString _error;
 };
+
+#ifndef QT_NO_DEBUG_STREAM
+QDebug operator<<(QDebug, const ParseError &);
+#endif
 
 } /* namespace parseqt */
 

@@ -46,10 +46,11 @@ void ParseQuery::getObjectById(const QString &objectId)
 	}
 	setBusy(true);
 
-	ParseError *error = ParseManager::instance()->request(QNetworkAccessManager::GetOperation,
-								   	      	  	  	      "classes/" + _className + "/" + objectId,
-								   	      	  	  	      QVariant(),
-								   	      	  	  	      this, SLOT(getObjectByIdFinished()));
+	ParseError *error = ParseManager::instance()->request(
+			QNetworkAccessManager::GetOperation,
+			"classes/" + _className + "/" + objectId,
+			ContentTypeNone, QVariant(),
+			this, SLOT(getObjectByIdFinished()));
 
 	if (error) {
 		setBusy(false);
@@ -165,10 +166,11 @@ void ParseQuery::findObjects()
 	QVariant data(constraints(&error));
 
 	if (data.isValid()) {
-		error = ParseManager::instance()->request(QNetworkAccessManager::GetOperation,
-								   	      	  	  "classes/" + _className,
-								   	      	  	  data,
-								   	      	  	  this, SLOT(findObjectsFinished()));
+		error = ParseManager::instance()->request(
+				QNetworkAccessManager::GetOperation,
+				"classes/" + _className,
+				ContentTypeJson, data,
+				this, SLOT(findObjectsFinished()));
 	}
 
 	if (error) {
@@ -233,7 +235,7 @@ QVariant ParseQuery::constraints(ParseError **error)
 
 	if (!_where.isEmpty()) {
 		QByteArray json(ParseJson::write(_where, error));
-		if (json.isEmpty()) {
+		if (json.isNull()) {
 			return QVariant();
 		}
 		buffer.append("where=");

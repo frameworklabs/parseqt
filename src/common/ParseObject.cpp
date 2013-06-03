@@ -124,10 +124,11 @@ void ParseObject::erase()
 	}
 	setBusy(true);
 
-	ParseError *error = ParseManager::instance()->request(QNetworkAccessManager::DeleteOperation,
-											"classes/" + _className + "/" + objectId(),
-											QVariant(),
-											this, SLOT(eraseFinished()));
+	ParseError *error = ParseManager::instance()->request(
+			QNetworkAccessManager::DeleteOperation,
+			"classes/" + _className + "/" + objectId(),
+			ContentTypeJson, QVariant(),
+			this, SLOT(eraseFinished()));
 
 	if (error) {
 		setBusy(false);
@@ -237,10 +238,11 @@ void ParseObject::createObject()
 	QVariant json = toJson(&error);
 
 	if (json.isValid()) {
-		error = ParseManager::instance()->request(QNetworkAccessManager::PostOperation,
-								   	      	  	  "classes/" + _className,
-								   	      	  	  filterJsonMap(json.toMap()),
-								   	      	  	  this, SLOT(createObjectFinished()));
+		error = ParseManager::instance()->request(
+				QNetworkAccessManager::PostOperation,
+				"classes/" + _className,
+				ContentTypeJson, filterJsonMap(json.toMap()),
+				this, SLOT(createObjectFinished()));
 	}
 
 	if (error) {
@@ -283,10 +285,11 @@ void ParseObject::updateObject()
 	QVariant json = toJson(&error);
 
 	if (json.isValid()) {
-		error = ParseManager::instance()->request(QNetworkAccessManager::PutOperation,
-								   	      	  	  	      "classes/" + _className + "/" + objectId(),
-								   	      	  	  	      diffJsonMap(filterJsonMap(_snapshot), filterJsonMap(json.toMap())),
-								   	      	  	  	      this, SLOT(updateObjectFinished()));
+		error = ParseManager::instance()->request(
+				QNetworkAccessManager::PutOperation,
+				"classes/" + _className + "/" + objectId(),
+				ContentTypeJson, diffJsonMap(filterJsonMap(_snapshot), filterJsonMap(json.toMap())),
+				this, SLOT(updateObjectFinished()));
 	}
 
 	if (error) {

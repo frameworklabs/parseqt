@@ -171,6 +171,7 @@ NavigationPane {
                     var type = itemType(data, indexPath)
                     if (type != "error") {
                         var itemViewPage = itemViewPageDefinition.createObject()
+                        itemViewPage.content.enabled = false
                         itemViewPage.item = data
                         navigationPane.push(itemViewPage)
                     }

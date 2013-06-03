@@ -8,9 +8,13 @@
 #ifndef ApplicationUI_HPP_
 #define ApplicationUI_HPP_
 
+#include <bb/cascades/Image>
+#include <bb/cascades/ImageView>
 #include <QObject>
 
-namespace bb { namespace cascades { class Application; }}
+namespace bb { namespace cascades {
+	class Application;
+}}
 
 /*!
  * @brief Application pane object
@@ -24,6 +28,8 @@ class ApplicationUI : public QObject
 public:
     ApplicationUI(bb::cascades::Application *app);
     virtual ~ApplicationUI() {}
+
+    Q_INVOKABLE void setImageFromByteArray(bb::cascades::ImageView *imageView, const QByteArray &data) const;
 };
 
 #endif /* ApplicationUI_HPP_ */
